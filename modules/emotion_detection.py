@@ -85,27 +85,3 @@ class EmotionDetector:
         except Exception as e:
             print(f"Emotion detection error: {e}")
             return "unknown"
-    
-    def get_emotion_color(self, emotion):
-        """
-        Get a color associated with an emotion for display purposes.
-        
-        Args:
-            emotion: String representing the emotion
-            
-        Returns:
-            tuple: BGR color values
-        """
-        # Color mapping (BGR format)
-        emotion_colors = {
-            'happy': (0, 255, 255),    # Yellow
-            'sad': (255, 0, 0),        # Blue
-            'angry': (0, 0, 255),      # Red
-            'neutral': (255, 255, 255),# White
-            'surprise': (0, 255, 0),   # Green
-            'fear': (255, 0, 255),     # Purple
-            'disgust': (0, 128, 128),  # Brown
-            'unknown': (128, 128, 128) # Gray
-        }
-        
-        return emotion_colors.get(emotion, (255, 255, 255))

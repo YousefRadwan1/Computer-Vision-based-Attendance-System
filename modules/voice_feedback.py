@@ -43,22 +43,3 @@ class VoiceFeedback:
         with self.lock:
             self.engine.say(text)
             self.engine.runAndWait()
-    
-    def attendance_confirmation(self, name, emotion=None, is_first_attendance=True):
-        """
-        Speak an attendance confirmation message.
-        
-        Args:
-            name (str): Person's name
-            emotion (str, optional): Detected emotion
-            is_first_attendance (bool): Whether this is the first time or a repeat
-        """
-        if is_first_attendance:
-            message = f"{name} marked present"
-        else:
-            message = f"{name} already marked present"
-        
-        if emotion:
-            message += f", status: {emotion}"
-        
-        self.speak(message)

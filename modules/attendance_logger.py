@@ -132,28 +132,6 @@ class AttendanceLogger:
         
         return True
     
-    def get_cooldown_status(self, name):
-        """
-        Get the cooldown status for a student.
-        
-        Args:
-            name: Student's name
-            
-        Returns:
-            tuple: (in_cooldown, seconds_remaining)
-        """
-        if name not in self.attendance_log:
-            return False, 0
-            
-        current_time = datetime.now()
-        last_time = self.attendance_log[name]["timestamp"]
-        seconds_elapsed = (current_time - last_time).total_seconds()
-        
-        if seconds_elapsed < config.ATTENDANCE_COOLDOWN:
-            return True, config.ATTENDANCE_COOLDOWN - seconds_elapsed
-            
-        return False, 0
-    
     def get_attendance_summary(self):
         """
         Get a summary of today's attendance.
@@ -170,33 +148,6 @@ class AttendanceLogger:
         except Exception as e:
             print(f"Error reading attendance file: {e}")
             return None
-    
-    def get_students_present(self):
-        """
-        Get a list of students present today.
-        
-        Returns:
-            list: Names of students who marked attendance
-        """
-        summary = self.get_attendance_summary()
-        if summary is None:
-            return []
-        
-        return summary["Name"].unique().tolist()
-        
-    def get_last_emotion(self, name):
-        """
-        Get the last recorded emotion for a student.
-        
-        Args:
-            name: Student's name
-            
-        Returns:
-            str: Last recorded emotion or None if not found
-        """
-        if name in self.attendance_log:
-            return self.attendance_log[name]["emotion"]
-        return None
         
     def export_attendance_report(self, output_file=None):
         """

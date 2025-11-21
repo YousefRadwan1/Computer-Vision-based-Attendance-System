@@ -29,10 +29,6 @@ class CameraCalibrator:
                 print(f"Error loading calibration data: {e}")
         return False
     
-    def is_calibrated(self):
-        """Check if the camera is calibrated."""
-        return self.camera_matrix is not None and self.dist_coeffs is not None
-    
     def find_chessboard_enhanced(self, gray, CHECKERBOARD):
         """
         Enhanced chessboard detection using multiple methods.
@@ -95,92 +91,6 @@ class CameraCalibrator:
         print(f"Chessboard pattern saved as '{output_path}'")
         return img
 
-    def calibrate_from_images(self, images_path):
-        """
-        Calibrate camera using existing chessboard images.
-        
-        Args:
-            images_path: Path to directory containing chessboard images
-            
-        Returns:
-            bool: True if calibration successful, False otherwise
-        """
-        print(f"Loading calibration images from {images_path}")
-        
-        # Defining the dimensions of chessboard
-        CHECKERBOARD = config.CHECKERBOARD_SIZE
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        
-        # Creating vector to store vectors of 3D points for each checkerboard image
-        objpoints = []
-        # Creating vector to store vectors of 2D points for each checkerboard image
-        imgpoints = []
-        
-        # Defining the world coordinates for 3D points
-        objp = np.zeros((1, CHECKERBOARD[0] * CHECKERBOARD[1], 3), np.float32)
-        objp[0, :, :2] = np.mgrid[0:CHECKERBOARD[0], 0:CHECKERBOARD[1]].T.reshape(-1, 2)
-        
-        # Load images
-        image_files = glob.glob(os.path.join(images_path, "*.jpg")) + \
-                     glob.glob(os.path.join(images_path, "*.png"))
-        
-        if len(image_files) == 0:
-            print(f"No images found in {images_path}")
-            return False
-        
-        print(f"Found {len(image_files)} images")
-        successful_images = 0
-        
-        for img_file in image_files:
-            img = cv2.imread(img_file)
-            if img is None:
-                print(f"Failed to load {img_file}")
-                continue
-                
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            
-            # Find chessboard corners using enhanced method
-            ret, corners = self.find_chessboard_enhanced(gray, CHECKERBOARD)
-            
-            # If found, add object points, image points (after refining them)
-            if ret:
-                objpoints.append(objp)
-                corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                imgpoints.append(corners2)
-                
-                # Draw and display the corners for debugging
-                img_with_corners = cv2.drawChessboardCorners(img.copy(), CHECKERBOARD, corners2, ret)
-                cv2.imwrite(os.path.join(config.CALIBRATION_DIR, f"corners_{os.path.basename(img_file)}"), img_with_corners)
-                
-                successful_images += 1
-                print(f"Processed {img_file} - Successfully detected chessboard ({successful_images}/{len(image_files)})")
-            else:
-                print(f"Chessboard not found in {img_file}")
-        
-        if successful_images < 5:  # Need at least 5 good images for reliable calibration
-            print(f"Calibration failed - insufficient valid images ({successful_images}). Need at least 5.")
-            return False
-            
-        # Calibrate camera
-        print("Calibrating camera...")
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-            objpoints, imgpoints, gray.shape[::-1], None, None)
-        
-        # Save calibration data
-        np.savez(config.CALIBRATION_FILE, camera_matrix=mtx, dist_coeffs=dist)
-        self.camera_matrix = mtx
-        self.dist_coeffs = dist
-        
-        # Calculate reprojection error
-        mean_error = 0
-        for i in range(len(objpoints)):
-            imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-            error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-            mean_error += error
-        
-        print(f"Camera calibration completed with average reprojection error: {mean_error/len(objpoints)}")
-        return True
-    
     def calibrate_camera(self, cap):
         """
         Calibrate the camera using a chessboard pattern.
